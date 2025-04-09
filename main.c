@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>     //for exit()
 #include "fileui.c"
 
 #define MAX_INPUT 100
