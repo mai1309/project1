@@ -3,6 +3,7 @@
 void file_simulation()
 {
     printf("Welcome to the File System Simulation!\n");
+    printf("Type 'help' for a list of commands, or 'exit' to quit.\n");
 }
 
 /* example of what can be printed 
