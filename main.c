@@ -30,21 +30,44 @@ int main() {
             } 
             else if (strcmp(input, "help") == 0) {
                 printf("Available commands:\n");
-                printf(" - help\n");
-                printf(" - exit\n");
-                printf(" - mkdir\n");
-                printf(" - rmdir\n");
+                printf("- exit     - Exit the simulation\n");
+                printf("- mkdir    - Create a new directory\n");
+                printf("- rmdir    - Delete an existing directory\n");
+                printf("- ls       - List directory contents\n");
+                printf("- cd       - Change directory\n");
             }
             else if (strcmp(input, "ls") == 0) {
                 list_contents();
             } 
             else if (strncmp(input, "mkdir",5) == 0) {
-                sscanf(input + 6, "%s", name);      //gets the directory name
-                create_directory(name);
+                if(sscanf(input + 6, "%s", name)==1)      //gets the directory name
+                {
+                    create_directory(name);
+                }
+                else
+                {
+                    printf("Invalid directory name.\n");
+                }
             } 
             else if (strncmp(input, "rmdir",5) == 0) {
-                sscanf(input + 6, "%s", name);      //gets the directory name
-                delete_directory(name);
+                if(sscanf(input + 6, "%s", name)==1)      //gets the directory name
+                {
+                    delete_directory(name);
+                }
+                else
+                {
+                    printf("Invalid directory name.\n");
+                }
+            } 
+            else if (strncmp(input, "cd",2) == 0) {
+                if(sscanf(input + 3, "%s", name)==1)      //gets the directory name
+                {
+                    change_directory(name);
+                }
+                else
+                {
+                    printf("In the same directory, add a name to change.\n");
+                }
             } 
             else {
                 printf("Unknown command: %s\n", input);
