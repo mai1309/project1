@@ -1,4 +1,8 @@
-#include <stdio.h>
+#include <stdio.h>      //printf
+#include <sys/stat.h>   //mkdir
+#include <sys/types.h>  //mode_t (0777)
+#include <unistd.h>     //rmdir
+#include <dirent.h>     //open,read,closedir
 
 void file_simulation()
 {
@@ -67,3 +71,33 @@ Changed directory to: /
 $> exit
 Exiting the simulation. Goodbye!
 */
+void list_contents()
+{
+
+}
+
+void create_directory(const char *name)
+{
+    const char *directory_name = name;
+    if(mkdir(directory_name, 0777) == 0)
+    {
+        printf("Directory succesfully created.\n");
+    }
+    else
+    {
+        perror("mkdir failed");
+    }
+}
+
+void delete_directory(const char *name)
+{
+    const char *directory_name = name;
+    if(rmdir(directory_name) == 0)
+    {
+        printf("Directory succesfully deleted.\n");
+    }
+    else
+    {
+        perror("rmdir failed");
+    }
+}
