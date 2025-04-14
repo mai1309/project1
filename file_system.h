@@ -37,4 +37,11 @@ int search_directory(Directory* current_dir, const char *name);
 void create_directory(const char *name);
 void delete_directory(const char *name);
 
+void add_user(const char *username, const char *group);
+void switch_user(const char *username);
+extern char current_user[20];
+extern char current_group[20];
+
+void* simulate_process(void *arg);
+
 #endif
