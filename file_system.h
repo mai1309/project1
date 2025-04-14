@@ -14,4 +14,11 @@ void write_file(char *file, char *content);
 void read_file(char *file);
 void delete_file(char *file);
 
+void add_user(const char *username, const char *group);
+void switch_user(const char *username);
+extern char current_user[20];
+extern char current_group[20];
+
+void* simulate_process(void *arg);
+
 #endif
