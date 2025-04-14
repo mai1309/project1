@@ -7,7 +7,8 @@ int main()
 {
     int i = 0;
     char input[50];
-    char file[50];
+    char file[50];  //used for files
+    char name[50];  //used for directories
     char content[100];
     
     file_simulation();
@@ -26,6 +27,9 @@ int main()
             printf("- read    - Read file\n");
             printf("- write   - Write to file\n");
             printf("- delete  - Delete file\n");
+            printf("- list    - List content in directory\n");
+            printf("- createdir   - Creates directory\n");
+            printf("- deletedir   - Deletes directory\n");
         }
         else if(strncmp(input, "create", 6) == 0)       //extracts the file name after the input word
         {
@@ -68,6 +72,22 @@ int main()
         }
         else if(strcmp(input, "exit") == 0)
             break;
+        else if(strcmp(input, "list") == 0)
+            list_contents();
+        else if(strncmp(input, "createdir", 9) == 0)       //extracts the file name after the input word
+        {
+            if(sscanf(input + 10, "%s", name) == 1)
+                create_directory(name);
+            else    
+                printf("Missing directory name.\n");
+        }
+        else if(strncmp(input, "deletedir", 9) == 0)
+        {
+            if(sscanf(input + 10, "%s", name) == 1)
+                delete_directory(name);
+            else    
+                printf("Missing directory name.\n");
+        }
         else
             printf("Unknown Command\n");
     } 
