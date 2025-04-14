@@ -1,11 +1,13 @@
-#ifndef FILEUI_H
-#define FILEUI_H
+#ifndef FILE_SYSTEM_H
+#define FILE_SYSTEM_H
 
-void file_simulation(void);
+/*create list_contents, create directory, delete director, change directory 
 void list_contents(void);
 void create_directory(const char *name);
 void delete_directory(const char *name);
-void change_directory(const char *name);
+void change_directory(const char *name);    */
+
+void file_simulation(void);
 int search_file(char *file);  
 void create_file(char *file);
 void write_file(char *file, char *content);
