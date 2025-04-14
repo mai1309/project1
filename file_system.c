@@ -1,7 +1,7 @@
 #include "file_system.h"
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <stdio.h>      //printf & scanf
+#include <string.h>     //strcmp
+#include <time.h>       //time
 
 typedef struct {          //File metadata struct
     char filename[20];

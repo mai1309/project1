@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <stdio.h>      //printf & scanf
+#include <string.h>     //strcmp
+#include <time.h>       //time
 #include "file_system.c"
 
 int main()
