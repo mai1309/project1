@@ -7,7 +7,7 @@ void create_directory(const char *name);
 void delete_directory(const char *name);
 void change_directory(const char *name);    */
 
-void file_simulation(void);
+void file_simulation();
 int search_file(char *file);  
 void create_file(char *file);
 void write_file(char *file, char *content);

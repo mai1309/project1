@@ -15,6 +15,12 @@ typedef struct {          //File metadata struct
 File all_files[100];
 int file_count = 0;
 
+void file_simulation()
+{
+    printf("Welcome to File Simulation!\n");
+    printf("Type help to see a list of commands or exit to leave simulation.\n");
+}
+
 int search_file(char *file)  //returns file location if found
 {
     for(int i = 0; i < file_count; i++)
@@ -55,10 +61,9 @@ void write_file(char *file, char *content)
     {
         strcpy(all_files[index].content, content);
         all_files[index].size = strlen(all_files[index].content);
-        printf("wrote to %s\n", file);
+        printf("Wrote to %s\n", file);
         return;
     }
-    
    printf("%s does not exist\n", file);
    return;
 
@@ -69,11 +74,13 @@ void read_file(char *file)
     int index = search_file(file);
     if(index  >= 0)
     {
-        printf("%s\n", file);
-        printf("%s\n", all_files[index].content);
+        printf("Reading file: %s\n", file);
+        if(strlen(all_files[index].content) ==0)
+            printf("File is empty.\n");
+        else
+            printf("%s\n", all_files[index].content);
         return;
     }
-
     printf("%s does not exist\n", file);
     return;
 }
