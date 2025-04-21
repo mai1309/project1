@@ -23,15 +23,7 @@ int main()
         if(strcmp(input, "help") == 0)
         {
             printf("Avaliable Commands:\n");
-            printf("- exit    - Exit simulation\n");
-            printf("- create  - Create file\n");
-            printf("- read    - Read file\n");
-            printf("- write   - Write to file\n");
-            printf("- delete  - Delete file\n");
-            printf("- list    - List content in directory\n");
-            printf("- createdir   - Creates directory\n");
-            printf("- deletedir   - Deletes directory\n");
-            printf("Available Commands:\n");
+            
             printf("- exit                         - Exit simulation\n");
             printf("- create <filename>            - Create a file (owned by current user)\n");
             printf("- read <filename>              - Read a file (requires read permission)\n");
@@ -41,6 +33,9 @@ int main()
             printf("- switchuser <username>        - Switch to an existing user\n");
             printf("- whoami                       - Display the current user and group\n");
             printf("- createprocess <filename>     - Simulate a process writing to a file\n");
+            printf("- list                         - List content in directory\n");
+            printf("- createdir                    - Creates directory\n");
+            printf("- deletedir                    - Deletes directory\n");
         }
         else if (strncmp(input, "createprocess", 13) == 0)
             {
