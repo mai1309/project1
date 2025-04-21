@@ -29,6 +29,9 @@ char current_group[20] = "admin";
 
 void file_simulation()
 {
+    //add admin user automatically.
+    add_user("admin", "admin");
+
      //memory for the root directory
      current_dir = (Directory*)malloc(sizeof(Directory));
      if (current_dir == NULL) {
