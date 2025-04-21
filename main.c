@@ -37,7 +37,7 @@ int main()
             printf("- createdir                    - Creates directory\n");
             printf("- deletedir                    - Deletes directory\n");
         }
-        else if (strncmp(input, "createprocess", 13) == 0)
+        else if (strncmp(input, "createprocess ", 14) == 0)
             {
                 char file[50];
                 if (sscanf(input + 14, "%s", file) == 1)
@@ -59,21 +59,21 @@ int main()
                     printf("Usage: createprocess <filename>\n");
                 }
             }
-        else if(strncmp(input, "create", 6) == 0)       //extracts the file name after the input word
+        else if(strncmp(input, "create ", 7) == 0)       //extracts the file name after the input word
         {
             if(sscanf(input + 7, "%s", file) == 1)
                 create_file(file);
             else    
                 printf("Missing file name.\n");
         }
-        else if(strncmp(input, "read", 4) == 0)
+        else if(strncmp(input, "read ", 5) == 0)
         {
             if(sscanf(input + 5, "%s", file) == 1)
                 read_file(file);
             else    
                 printf("Missing file name.\n");
         }
-        else if(strncmp(input, "write", 5) == 0)
+        else if(strncmp(input, "write ", 6) == 0)
         {
             if(sscanf(input + 6, "%s", file) == 1)
             {
@@ -91,7 +91,7 @@ int main()
             else    
                 printf("Missing file name.\n");
         }
-        else if(strncmp(input, "delete", 6) == 0)
+        else if(strncmp(input, "delete ", 7) == 0)
         {
             if(sscanf(input + 7, "%s", file) == 1)
                 delete_file(file);
@@ -102,21 +102,21 @@ int main()
             break;
         else if(strcmp(input, "list") == 0)
             list_contents();
-        else if(strncmp(input, "createdir", 9) == 0)       //extracts the file name after the input word
+        else if(strncmp(input, "createdir ", 10) == 0)       //extracts the file name after the input word
         {
             if(sscanf(input + 10, "%s", name) == 1)
                 create_directory(name);
             else    
                 printf("Missing directory name.\n");
         }
-        else if(strncmp(input, "deletedir", 9) == 0)
+        else if(strncmp(input, "deletedir ", 10) == 0)
         {
             if(sscanf(input + 10, "%s", name) == 1)
                 delete_directory(name);
             else    
                 printf("Missing directory name.\n");
         }
-        else if(strncmp(input, "adduser", 7) == 0)
+        else if(strncmp(input, "adduser ", 8) == 0)
             {
                 char uname[20], grp[20];
                 if(sscanf(input + 8, "%s %s", uname, grp) == 2)
@@ -124,7 +124,7 @@ int main()
                 else
                     printf("Usage: adduser <username> <group>\n");
             }
-        else if(strncmp(input, "switchuser", 10) == 0)
+        else if(strncmp(input, "switchuser ", 11) == 0)
             {
                 char uname[20];
                 if(sscanf(input + 11, "%s", uname) == 1)

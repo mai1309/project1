@@ -227,8 +227,31 @@ void create_directory(const char *name)
 //it also delete 
 void delete_directory(const char *name)
 {
+    int index = search_directory(current_dir, name);
 
+    if (index == -1) {
+        printf("Directory '%s' not found.\n", name);
+        return;
+    }
+
+    Directory* dir_to_delete = current_dir->subdirs[index];
+
+    if (dir_to_delete->subdir_count > 0 || dir_to_delete->file_count > 0) {
+        printf("Directory '%s' is not empty. Cannot delete.\n", name);
+        return;
+    }
+
+    free(dir_to_delete);  // deallocate memory
+
+    // Shift remaining directories to fill the gap
+    for (int i = index; i < current_dir->subdir_count - 1; i++) {
+        current_dir->subdirs[i] = current_dir->subdirs[i + 1];
+    }
+
+    current_dir->subdir_count--;
+    printf("Directory '%s' has been deleted.\n", name);
 }
+
 void add_user(const char *username, const char *group) {
     if (user_count < 10) {
         strcpy(users[user_count].username, username);
