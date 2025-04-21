@@ -4,19 +4,6 @@
 #include <time.h>       //time
 #include <stdlib.h>     //malloc
 
-struct File;
-struct Directory;
-typedef struct {          //File metadata struct
-    char filename[20];
-    int size;
-    time_t creation_date; 
-    char permissions[10];
-    char content[100];
-    int exists;
-    char owner[20];
-    char group[20];
-
-} File;
 
 File all_files[100];
 int file_count = 0;

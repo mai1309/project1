@@ -6,14 +6,17 @@
 /*check why create directory doesnt show correct directory name
 void change_directory(const char *name);    */
 
-typedef struct File{          //File metadata struct
+typedef struct File {          //File metadata struct
     char filename[20];
     int size;
     time_t creation_date; 
     char permissions[10];
     char content[100];
     int exists;
+    char owner[20]; 
+    char group[20];   
 } File;
+
 
 typedef struct Directory{        //Directory metadata struct
     char dirname[20];
