@@ -4,9 +4,6 @@
 #include <time.h>       //time
 #include <stdlib.h>     //malloc
 
-
-File all_files[100];
-int file_count = 0;
 Directory* current_dir;
 
 //this will handle user metadata 
@@ -24,8 +21,6 @@ void switch_user(const char *username);
 
 char current_user[20] = "admin";
 char current_group[20] = "admin";
-
-
 
 void file_simulation()
 {
@@ -48,42 +43,50 @@ void file_simulation()
     printf("Type help to see a list of commands or exit to leave simulation.\n");
 }
 
-int search_file(char *file)  //returns file location if found
-{
-    for(int i = 0; i < file_count; i++)
-    {
-        if(strcmp(all_files[i].filename, file) == 0 && all_files[i].exists)
+int search_file(char *file) {
+    for (int i = 0; i < current_dir->file_count; i++) {
+        if (current_dir->files[i]->exists && strcmp(current_dir->files[i]->filename, file) == 0) {
             return i;
+        }
     }
     return -1;
 }
 
-void create_file(char *file)
-{
-    if(search_file(file) >= 0)
-    {
-        printf("%s already exists\n", file);
-        return;
+
+void create_file(char *file) {
+    // Check if file already exists in current directory
+    for (int i = 0; i < current_dir->file_count; i++) {
+        if (current_dir->files[i]->exists && strcmp(current_dir->files[i]->filename, file) == 0) {
+            printf("%s already exists in %s\n", file, current_dir->dirname);
+            return;
+        }
     }
-    if(file_count < 100)
-    {
-        //set up struct instance info
-        strcpy(all_files[file_count].filename, file);
-        all_files[file_count].creation_date = time(NULL);
-        strcpy(all_files[file_count].permissions,"rw-rw-r");      //default permissions
-        all_files[file_count].exists = 1;
 
-        strcpy(all_files[file_count].owner, current_user);
-        strcpy(all_files[file_count].group, current_user);
-
-        printf("%s has been created by %s\n", file, current_user);
-        file_count++;
+    if (current_dir->file_count >= 50) {
+        printf("Cannot create more files in '%s'\n", current_dir->dirname);
         return;
     }
 
-    printf("Cannot make more files!\n");
-    return;
+    File *new_file = (File*)malloc(sizeof(File));
+    if (new_file == NULL) {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+
+    strcpy(new_file->filename, file);
+    new_file->creation_date = time(NULL);
+    strcpy(new_file->permissions, "rw-rw-r");
+    strcpy(new_file->owner, current_user);
+    strcpy(new_file->group, current_group);
+    new_file->exists = 1;
+    new_file->size = 0;
+    new_file->content[0] = '\0';
+
+    current_dir->files[current_dir->file_count++] = new_file;
+
+    printf("%s has been created by %s in %s\n", file, current_user, current_dir->dirname);
 }
+
 
 //this function is made to check if the user has certain permission whicvh will be used in read_file, write_file, and delete_file functions. 
 int has_permission(File *file, const char *mode) {
@@ -110,80 +113,90 @@ int has_permission(File *file, const char *mode) {
 
 }
 
-void write_file(char *file, char *content)
-{
+void write_file(char *file, char *content) {
     int index = search_file(file);
-    if(index >= 0)
-    {
-        if (!has_permission(&all_files[index], "w")) {
+    if (index >= 0) {
+        File *target = current_dir->files[index];
+
+        if (!has_permission(target, "w")) {
             printf("Permission denied: Cannot write to %s\n", file);
-            return; //has_permission function checker
+            return;
         }
 
-        strcpy(all_files[index].content, content);
-        all_files[index].size = strlen(all_files[index].content);
+        strcpy(target->content, content);
+        target->size = strlen(content);
         printf("Wrote to %s\n", file);
         return;
     }
-   printf("%s does not exist\n", file);
-   return;
-
+    printf("%s does not exist in %s\n", file, current_dir->dirname);
 }
 
-void read_file(char *file)
-{
+
+void read_file(char *file) {
     int index = search_file(file);
-    if(index  >= 0)
-    {
-        if (!has_permission(&all_files[index], "r")) {
+    if (index >= 0) {
+        File *target = current_dir->files[index];
+
+        if (!has_permission(target, "r")) {
             printf("Permission denied: Cannot read %s\n", file);
             return;
-        }//has_permission function checker
+        }
 
         printf("Reading file: %s\n", file);
-        if(strlen(all_files[index].content) ==0)
+        if (strlen(target->content) == 0)
             printf("File is empty.\n");
         else
-            printf("%s\n", all_files[index].content);
+            printf("%s\n", target->content);
         return;
     }
-    printf("%s does not exist\n", file);
-    return;
+    printf("%s does not exist in %s\n", file, current_dir->dirname);
 }
 
-void delete_file(char *file)
-{
+
+void delete_file(char *file) {
     int index = search_file(file);
-    if(index >= 0)
-    {
-        if (!has_permission(&all_files[index], "w")) {
+    if (index >= 0) {
+        File *target = current_dir->files[index];
+
+        if (!has_permission(target, "w")) {
             printf("Permission denied: Cannot delete %s\n", file);
             return;
-        } //has_permission function checker
+        }
 
-        all_files[index].exists = 0;   
-        printf("%s has been deleted\n", file);
+        target->exists = 0;
+        printf("%s has been deleted from %s\n", file, current_dir->dirname);
         return;
     }
-
-    printf("%s does not exist\n", file);
-    return;
+    printf("%s does not exist in %s\n", file, current_dir->dirname);
 }
 
-void list_contents()
-{
-    printf("Listing Content:\n");
-    if(file_count == 0)
-    {
-        printf("No files available.\n");
-        return;
+
+void list_contents() {
+    printf("Listing contents in %s:\n", current_dir->dirname);
+
+    if (current_dir->subdir_count == 0) {
+        printf("No directories.\n");
+    } else {
+        printf("Directories:\n");
+        for (int i = 0; i < current_dir->subdir_count; i++) {
+            if (current_dir->subdirs[i]->exists) {
+                printf("- %s/\n", current_dir->subdirs[i]->dirname);
+            }
+        }
     }
-    for (int i = 0; i < file_count; i++) 
-    {
-        if (all_files[i].exists) 
-            printf("- %s\n", all_files[i].filename);
+
+    if (current_dir->file_count == 0) {
+        printf("No files.\n");
+    } else {
+        printf("Files:\n");
+        for (int i = 0; i < current_dir->file_count; i++) {
+            if (current_dir->files[i]->exists) {
+                printf("- %s\n", current_dir->files[i]->filename);
+            }
+        }
     }
 }
+
 int search_directory(Directory* current_dir, const char *name) 
 {
     for(int i = 0; i < current_dir->subdir_count; i++)
@@ -225,8 +238,7 @@ void create_directory(const char *name)
 }
 //make sure you delete the directory recursively so all the files 
 //it also delete 
-void delete_directory(const char *name)
-{
+void delete_directory(const char *name) {
     int index = search_directory(current_dir, name);
 
     if (index == -1) {
@@ -236,21 +248,54 @@ void delete_directory(const char *name)
 
     Directory* dir_to_delete = current_dir->subdirs[index];
 
-    if (dir_to_delete->subdir_count > 0 || dir_to_delete->file_count > 0) {
-        printf("Directory '%s' is not empty. Cannot delete.\n", name);
-        return;
+    //deletes all files in this directory
+    for (int i = 0; i < dir_to_delete->file_count; i++) {
+        if (dir_to_delete->files[i]->exists) {
+            free(dir_to_delete->files[i]);
+        }
     }
+    dir_to_delete->file_count = 0;
 
-    free(dir_to_delete);  // deallocate memory
+    //recursively delete all subdirectories
+    for (int i = 0; i < dir_to_delete->subdir_count; i++) {
+        if (dir_to_delete->subdirs[i]->exists) {
+            delete_directory(dir_to_delete->subdirs[i]->dirname);
+        }
+    }
+    dir_to_delete->subdir_count = 0;
 
-    // Shift remaining directories to fill the gap
+    free(dir_to_delete);
+
+    //shift the remaining subdirectories to fill the gap
     for (int i = index; i < current_dir->subdir_count - 1; i++) {
         current_dir->subdirs[i] = current_dir->subdirs[i + 1];
     }
-
     current_dir->subdir_count--;
+
     printf("Directory '%s' has been deleted.\n", name);
 }
+
+void switchdir(const char *name) {
+    if (strcmp(name, "..") == 0) {
+        if (current_dir->parent != NULL) {
+            current_dir = current_dir->parent;
+            printf("Switched to parent directory: %s\n", current_dir->dirname);
+        } else {
+            printf("Already at the root directory.\n");
+        }
+        return;
+    }
+
+    int index = search_directory(current_dir, name);
+    if (index == -1) {
+        printf("Directory '%s' not found in '%s'\n", name, current_dir->dirname);
+        return;
+    }
+
+    current_dir = current_dir->subdirs[index];
+    printf("Switched to directory: %s\n", current_dir->dirname);
+}
+
 
 void add_user(const char *username, const char *group) {
     if (user_count < 10) {
@@ -280,5 +325,15 @@ void* simulate_process(void *arg) {
     return NULL;
 }
 
+void list_users() {
+    printf("List of users:\n");
+    if (user_count == 0) {
+        printf("No users found.\n");
+        return;
+    }
 
+    for (int i = 0; i < user_count; i++) {
+        printf("- Username: %s | Group: %s\n", users[i].username, users[i].group);
+    }
+}
 

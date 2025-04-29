@@ -39,9 +39,11 @@ void list_contents();
 int search_directory(Directory* current_dir, const char *name);
 void create_directory(const char *name);
 void delete_directory(const char *name);
+void switchdir(const char *name);
 
 void add_user(const char *username, const char *group);
 void switch_user(const char *username);
+void list_users();
 extern char current_user[20];
 extern char current_group[20];
 
