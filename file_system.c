@@ -3,6 +3,7 @@
 #include <string.h>     //strcmp
 #include <time.h>       //time
 #include <stdlib.h>     //malloc
+#include <unistd.h>     //symlink
 
 Directory* current_dir;
 
@@ -114,6 +115,7 @@ int has_permission(File *file, const char *mode) {
 }
 
 void write_file(char *file, char *content) {
+    file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
         File *target = current_dir->files[index];
@@ -133,6 +135,7 @@ void write_file(char *file, char *content) {
 
 
 void read_file(char *file) {
+    file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
         File *target = current_dir->files[index];
@@ -154,6 +157,7 @@ void read_file(char *file) {
 
 
 void delete_file(char *file) {
+    file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
         File *target = current_dir->files[index];
@@ -195,6 +199,17 @@ void list_contents() {
             }
         }
     }
+
+    if (current_dir->symlink_count == 0) {
+        printf("No symlinks.\n");
+    } else {
+        printf("Symlinks:\n");
+        for (int i = 0; i < current_dir->symlink_count; i++) {
+            if (current_dir->symlinks[i]->exists) {
+                printf("- %s -> %s\n", current_dir->symlinks[i]->linkname, current_dir->symlinks[i]->target);
+            }
+        }
+    }    
 }
 
 int search_directory(Directory* current_dir, const char *name) 
@@ -276,6 +291,7 @@ void delete_directory(const char *name) {
 }
 
 void switchdir(const char *name) {
+    //checking for ..
     if (strcmp(name, "..") == 0) {
         if (current_dir->parent != NULL) {
             current_dir = current_dir->parent;
@@ -284,6 +300,23 @@ void switchdir(const char *name) {
             printf("Already at the root directory.\n");
         }
         return;
+    }
+
+    //checking if it's a symlink
+    for (int i = 0; i < current_dir->symlink_count; i++) {
+        if (current_dir->symlinks[i]->exists && strcmp(current_dir->symlinks[i]->linkname, name) == 0) {
+            char *target = current_dir->symlinks[i]->target;
+            
+            int index = search_directory(current_dir, target);
+            if (index != -1) {
+                current_dir = current_dir->subdirs[index];
+                printf("Switched to symlinked directory: %s -> %s\n", name, target);
+                return;
+            } else {
+                printf("Target directory '%s' not found.\n", target);
+                return;
+            }
+        }
     }
 
     int index = search_directory(current_dir, name);
@@ -296,6 +329,50 @@ void switchdir(const char *name) {
     printf("Switched to directory: %s\n", current_dir->dirname);
 }
 
+void create_symlink(char *linkname, char *target) {
+    if (current_dir->symlink_count >= 20) {
+        printf("Cannot create more symlinks in '%s'\n", current_dir->dirname);
+        return;
+    }
+
+    SymLink* new_link = (SymLink*)malloc(sizeof(SymLink));
+    if (new_link == NULL) {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+
+    strcpy(new_link->linkname, linkname);
+    strcpy(new_link->target, target);
+    new_link->exists = 1;
+
+    current_dir->symlinks[current_dir->symlink_count++] = new_link;
+
+    printf("Symlink '%s' -> '%s' created successfully.\n", linkname, target);
+}
+
+char* resolve_symlink(char *name) {
+    for (int i = 0; i < current_dir->symlink_count; i++) {
+        if (current_dir->symlinks[i]->exists && strcmp(current_dir->symlinks[i]->linkname, name) == 0) {
+            return current_dir->symlinks[i]->target;
+        }
+    }
+    return name;  //not a symlink, return original name
+}
+
+void delete_symlink(char *linkname) {
+    for (int i = 0; i < current_dir->symlink_count; i++) {
+        if (current_dir->symlinks[i]->exists && strcmp(current_dir->symlinks[i]->linkname, linkname) == 0) {
+            free(current_dir->symlinks[i]);
+            for (int j = i; j < current_dir->symlink_count - 1; j++) {
+                current_dir->symlinks[j] = current_dir->symlinks[j+1];
+            }
+            current_dir->symlink_count--;
+            printf("Symlink '%s' has been deleted.\n", linkname);
+            return;
+        }
+    }
+    printf("Symlink '%s' not found.\n", linkname);
+}
 
 void add_user(const char *username, const char *group) {
     if (user_count < 10) {

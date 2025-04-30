@@ -39,6 +39,9 @@ int main()
             printf("- createdir <dirname>          - Creates directory\n");
             printf("- deletedir <dirname>          - Deletes directory\n");
             printf("- switchdir <dirname>          - Changes directory, use .. to move backwards\n");
+            printf("- link <linkname> <target>     - Creates Symlink\n");
+            printf("- unlink <linkname>            - Deletes Symlink\n");
+            printf("- resolve <linkname>           - Look up what symlink points to\n");
         }
         else if (strncmp(input, "createprocess ", 14) == 0)
         {
@@ -125,6 +128,36 @@ int main()
                 switchdir(name);
             else    
                 printf("Missing directory name.\n");
+        }
+        else if (strncmp(input, "link ", 5) == 0)
+        {
+            char linkname[50], target[50];
+            if (sscanf(input + 5, "%s %s", linkname, target) == 2)
+                create_symlink(linkname, target);
+            else
+                printf("Usage: link <linkname> <target>\n");
+        }
+        else if (strncmp(input, "unlink ", 7) == 0)
+        {
+            char linkname[50];
+            if (sscanf(input + 7, "%s", linkname) == 1)
+                delete_symlink(linkname);
+            else
+                printf("Usage: unlink <linkname>\n");
+        }
+        else if (strncmp(input, "resolve ", 8) == 0)
+        {
+            char linkname[50];
+            if (sscanf(input + 8, "%s", linkname) == 1)
+            {
+                char *target = resolve_symlink(linkname);
+                if (target)
+                    printf("Symlink '%s' points to '%s'\n", linkname, target);
+                else
+                    printf("Symlink '%s' not found.\n", linkname);
+            }
+            else
+                printf("Usage: resolve <linkname>\n");
         }
         else if(strncmp(input, "adduser ", 8) == 0)
         {
