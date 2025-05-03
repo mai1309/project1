@@ -38,7 +38,7 @@ void file_simulation();
 
 int search_file(char *file);  
 void create_file(char *file);
-void write_file(char *file, char *content);
+void write_file(char *file);        
 void read_file(char *file);
 void delete_file(char *file);
 

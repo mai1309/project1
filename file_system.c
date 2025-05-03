@@ -11,6 +11,7 @@ Directory* current_dir;
 typedef struct {
     char username[20];
     char group[20];
+    Directory* root_dir;
 } User;
 
 User users[10];
@@ -24,25 +25,14 @@ char current_user[20] = "admin";
 char current_group[20] = "admin";
 
 void file_simulation()
-{
-    //add admin user automatically.
+{   
     add_user("admin", "admin");
+    switch_user("admin");
 
-     //memory for the root directory
-     current_dir = (Directory*)malloc(sizeof(Directory));
-     if (current_dir == NULL) {
-         printf("Failed to initialize root directory. Memory allocation error.\n");
-         return;
-     }
-    strcpy(current_dir->dirname, "/");
-     current_dir->parent = NULL;
-     current_dir->subdir_count = 0;
-     current_dir->file_count = 0;
-     current_dir->exists = 1;
- 
     printf("Welcome to File Simulation!\n");
     printf("Type help to see a list of commands or exit to leave simulation.\n");
 }
+
 
 int search_file(char *file) {
     for (int i = 0; i < current_dir->file_count; i++) {
@@ -114,7 +104,7 @@ int has_permission(File *file, const char *mode) {
 
 }
 
-void write_file(char *file, char *content) {
+void write_file(char *file) {
     file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
@@ -125,6 +115,11 @@ void write_file(char *file, char *content) {
             return;
         }
 
+        char content[1024];
+        getchar(); // to consume leftover newline from previous input
+        printf("Write: ");
+        scanf("%[^\n]", content); // reads a full line including spaces
+
         strcpy(target->content, content);
         target->size = strlen(content);
         printf("Wrote to %s\n", file);
@@ -132,7 +127,6 @@ void write_file(char *file, char *content) {
     }
     printf("%s does not exist in %s\n", file, current_dir->dirname);
 }
-
 
 void read_file(char *file) {
     file = resolve_symlink(file);
@@ -192,13 +186,19 @@ void list_contents() {
     if (current_dir->file_count == 0) {
         printf("No files.\n");
     } else {
-        printf("Files:\n");
+        int files_found = 0;
         for (int i = 0; i < current_dir->file_count; i++) {
             if (current_dir->files[i]->exists) {
+                if (files_found == 0)
+                    printf("Files:\n");
                 printf("- %s\n", current_dir->files[i]->filename);
+                files_found = 1;
             }
         }
+        if (files_found == 0)
+            printf("No files.\n");
     }
+    
 
     if (current_dir->symlink_count == 0) {
         printf("No symlinks.\n");
@@ -378,16 +378,34 @@ void add_user(const char *username, const char *group) {
     if (user_count < 10) {
         strcpy(users[user_count].username, username);
         strcpy(users[user_count].group, group);
+
+        // Create user's root directory
+        Directory* user_root = (Directory*)malloc(sizeof(Directory));
+        if (user_root == NULL) {
+            printf("Failed to initialize root directory for %s. Memory allocation error.\n", username);
+            return;
+        }
+        strcpy(user_root->dirname, "/");
+        user_root->parent = NULL;
+        user_root->subdir_count = 0;
+        user_root->file_count = 0;
+        user_root->symlink_count = 0;
+        user_root->exists = 1;
+
+        users[user_count].root_dir = user_root;
+
         printf("User %s added to group %s\n", username, group);
         user_count++;
     }
 }
+
 
 void switch_user(const char *username) {
     for (int i = 0; i < user_count; i++) {
         if (strcmp(users[i].username, username) == 0) {
             strcpy(current_user, users[i].username);
             strcpy(current_group, users[i].group);
+            current_dir = users[i].root_dir;  // Switch to this user's root dir
             printf("Switched to user %s (group: %s)\n", current_user, current_group);
             return;
         }
@@ -395,12 +413,16 @@ void switch_user(const char *username) {
     printf("User not found\n");
 }
 
+
 void* simulate_process(void *arg) {
     char *file = (char *)arg;
+    printf("Process started for file %s\n", file);
     printf("Process is writing to file %s\n", file);
-    write_file(file, "Simulated concurrent write.\n");
+    write_file(file);
+    free(file); 
     return NULL;
 }
+
 
 void list_users() {
     printf("List of users:\n");
@@ -413,4 +435,3 @@ void list_users() {
         printf("- Username: %s | Group: %s\n", users[i].username, users[i].group);
     }
 }
-

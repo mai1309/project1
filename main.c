@@ -53,7 +53,6 @@ int main()
                     pthread_t tid;
                     pthread_create(&tid, NULL, simulate_process, strdup(file));
                     pthread_detach(tid);
-                    printf("Process started for file %s\n", file);
                 }
                 else
                 {
@@ -79,23 +78,16 @@ int main()
             else    
                 printf("Missing file name.\n");
         }
-        else if(strncmp(input, "write ", 6) == 0)
+        else if (strncmp(input, "write ", 6) == 0)
         {
-            if(sscanf(input + 6, "%s", file) == 1)
+            if (sscanf(input + 6, "%s", file) == 1)
             {
-                int index = search_file(file); 
-                if(index >= 0)
-                {
-                    getchar();
-                    printf("Write: ");
-                    scanf("%[^\n]", content);   //reads content with spaces
-                    write_file(file, content);
-                }
-                else
-                    printf("%s does not exist\n", file);
+                write_file(file);
             }
             else    
+            {
                 printf("Missing file name.\n");
+            }
         }
         else if(strncmp(input, "delete ", 7) == 0)
         {
@@ -105,7 +97,10 @@ int main()
                 printf("Missing file name.\n");
         }
         else if(strcmp(input, "exit") == 0)
+        {
+            printf("Exiting File Simulation. Goodbye!\n");
             break;
+        }
         else if(strcmp(input, "list") == 0)
             list_contents();
         else if(strncmp(input, "createdir ", 10) == 0)       //extracts the file name after the input word
