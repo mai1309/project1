@@ -5,8 +5,15 @@
 #include <stdlib.h>     //malloc
 #include <unistd.h>     //symlink
 #include <pthread.h>
+#include <signal.h>   
 
 pthread_mutex_t fs_lock = PTHREAD_MUTEX_INITIALIZER;
+int pipefd[2];  //global pipe that needs mutex
+
+typedef struct {
+    int role;        // 0 = writer, 1 = reader
+    char *filename;
+} thread_arg_t;
 
 
 Directory* current_dir;
@@ -27,6 +34,15 @@ void switch_user(const char *username);
 
 char current_user[20] = "admin";
 char current_group[20] = "admin";
+
+void handler(int sig) //Signal handler 
+{
+	if (sig == SIGINT) 
+	{
+        	printf("\n Caught SIGINT. Shutting down...\n");
+        	exit(0);
+    	}
+}
 
 void file_simulation()
 {
@@ -503,23 +519,75 @@ void switch_user(const char *username) {
     printf("User not found\n");
 }
 
+void* process(void *arg) 
+{
+    thread_arg_t *targ = (thread_arg_t *)arg;
+    char *file = targ->filename;
+    char MSG[5] = {0};
+
+    	if (targ->role == 0) //Checking if "parent process"
+	{
+        	write_file(file);
+        	pthread_mutex_lock(&fs_lock);  //Locking before accessing and writing to global pipe
+        	write(pipefd[1], "Done", 5);    //Letting child know that parent is done writing to file
+        	pthread_mutex_unlock(&fs_lock);
+    	} else {            //"Child process"
+		int n = read(pipefd[0], MSG, 5);
+
+    		while (n != 5) 
+		{
+     			n = read(pipefd[0], MSG, 5);
+               		usleep(10000); // Sleep 10ms before trying again
+    		}
+		if (n > 0 && strcmp(MSG, "Done") == 0)   //Checking if parent is done writing to file
+		{	
+			read_file(file);   
+		}
+
+    	}
+
+    free(file);
+    free(targ);
+    return NULL;
+}
 
 void* simulate_process(void *arg) {
     char *file = strdup((char *)arg);  // Make a safe copy
+    pthread_t processes[2];
     if (file == NULL) {
         perror("Failed to duplicate filename");
         return NULL;
     }
+    if (signal(SIGINT, handler) == SIG_ERR)   //Register SIGINT handler
+    perror("signal error");
 
-    usleep(100000); // delay to avoid race condition with shell
+    if (pipe(pipefd) == -1) 
+    {
+        perror("Pipe failure");
+        return NULL;
+    }
 
-    printf("Process started for file %s\n", file);
-    printf("Process is writing to file %s\n", file);
+    for (int i = 0; i < 2; i++) 
+    {
+        thread_arg_t *targ = malloc(sizeof(thread_arg_t));
+        if (!targ) 
+        {
+                perror("Failed to allocate thread arg");
+                continue;
+        }
+           targ->role = i;
+        targ->filename = strdup(file);
 
-    write_file(file);
+        pthread_create(&processes[i], NULL, process, (void *)targ);   //Creating "processes" through threads
+    }
 
-    free(file);
+    for (int i = 0; i < 2; i++)
+        pthread_join(processes[i], NULL);
+    close(pipefd[0]);
+    close(pipefd[1]);
+    printf("Simulation finished\n");
     return NULL;
+
 }
 
 
