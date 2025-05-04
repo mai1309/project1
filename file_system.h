@@ -34,6 +34,8 @@ typedef struct Directory{        //directory metadata struct
 } Directory;
 
 
+void chmod_file(char *file, const char *new_perms);
+
 void file_simulation();
 
 int search_file(char *file);  

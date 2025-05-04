@@ -1,9 +1,13 @@
 #include "file_system.h"
-#include <stdio.h>      //printf & scanf
+#include <stdio.h>      //printf
 #include <string.h>     //strcmp
 #include <time.h>       //time
 #include <stdlib.h>     //malloc
 #include <unistd.h>     //symlink
+#include <pthread.h>
+
+pthread_mutex_t fs_lock = PTHREAD_MUTEX_INITIALIZER;
+
 
 Directory* current_dir;
 
@@ -25,13 +29,41 @@ char current_user[20] = "admin";
 char current_group[20] = "admin";
 
 void file_simulation()
-{   
+{
+    // Create a global root directory shared by all users
+    Directory* global_root = (Directory*)malloc(sizeof(Directory));
+    strcpy(global_root->dirname, "/");
+    global_root->parent = NULL;
+    global_root->subdir_count = 0;
+    global_root->file_count = 0;
+    global_root->symlink_count = 0;
+    global_root->exists = 1;
+
+    // Create a shared directory under the global root
+    Directory* shared_dir = (Directory*)malloc(sizeof(Directory));
+    strcpy(shared_dir->dirname, "shared");
+    shared_dir->parent = global_root;
+    shared_dir->subdir_count = 0;
+    shared_dir->file_count = 0;
+    shared_dir->symlink_count = 0;
+    shared_dir->exists = 1;
+
+    global_root->subdirs[global_root->subdir_count++] = shared_dir;
+
+    // Add users and assign them to the same global root
     add_user("admin", "admin");
+    users[0].root_dir = global_root;
+
+    add_user("john", "admin");
+    users[1].root_dir = global_root;
+
+    // Start as admin
     switch_user("admin");
 
     printf("Welcome to File Simulation!\n");
     printf("Type help to see a list of commands or exit to leave simulation.\n");
 }
+
 
 
 int search_file(char *file) {
@@ -41,26 +73,33 @@ int search_file(char *file) {
         }
     }
     return -1;
+
+    
 }
 
 
 void create_file(char *file) {
+    pthread_mutex_lock(&fs_lock); //Lock before file access
+
     // Check if file already exists in current directory
     for (int i = 0; i < current_dir->file_count; i++) {
         if (current_dir->files[i]->exists && strcmp(current_dir->files[i]->filename, file) == 0) {
             printf("%s already exists in %s\n", file, current_dir->dirname);
+            pthread_mutex_unlock(&fs_lock); // Unlock
             return;
         }
     }
 
     if (current_dir->file_count >= 50) {
         printf("Cannot create more files in '%s'\n", current_dir->dirname);
+        pthread_mutex_unlock(&fs_lock); // Unlock
         return;
     }
 
     File *new_file = (File*)malloc(sizeof(File));
     if (new_file == NULL) {
         printf("Memory allocation failed.\n");
+        pthread_mutex_unlock(&fs_lock); // Unlock
         return;
     }
 
@@ -76,12 +115,14 @@ void create_file(char *file) {
     current_dir->files[current_dir->file_count++] = new_file;
 
     printf("%s has been created by %s in %s\n", file, current_user, current_dir->dirname);
+
+    pthread_mutex_unlock(&fs_lock); //Unlock after done
 }
 
 
 //this function is made to check if the user has certain permission whicvh will be used in read_file, write_file, and delete_file functions. 
 int has_permission(File *file, const char *mode) {
-    int index = 6; //this is the default number for "other"
+    int index = 6; // default to 'other'
 
     if (strcmp(current_user, file->owner) == 0) {
         index = 0;
@@ -89,22 +130,26 @@ int has_permission(File *file, const char *mode) {
         index = 3;
     }
 
+    printf("[DEBUG] Checking '%s' permission for %s. Permissions: %s, Index: %d\n", 
+           mode, current_user, file->permissions, index);
+
     if(strcmp(mode, "r") == 0 && file->permissions[index] == 'r') {
         return 1;
     }
-    if(strcmp(mode, "w") == 0 && file->permissions[index +1 ] == 'w') {
+    if(strcmp(mode, "w") == 0 && file->permissions[index + 1] == 'w') {
         return 1;
     }
-    if(strcmp(mode, "x") == 0 && file->permissions[index + 2 ] == 'x') {
+    if(strcmp(mode, "x") == 0 && file->permissions[index + 2] == 'x') {
         return 1;
     }
 
-    return 0; //if it returns 0 then this means permission denied.
-    
-
+    return 0;
 }
 
+
 void write_file(char *file) {
+    pthread_mutex_lock(&fs_lock);
+
     file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
@@ -112,23 +157,61 @@ void write_file(char *file) {
 
         if (!has_permission(target, "w")) {
             printf("Permission denied: Cannot write to %s\n", file);
+            pthread_mutex_unlock(&fs_lock);
             return;
         }
 
         char content[1024];
-        getchar(); // to consume leftover newline from previous input
-        printf("Write: ");
-        scanf("%[^\n]", content); // reads a full line including spaces
 
-        strcpy(target->content, content);
-        target->size = strlen(content);
-        printf("Wrote to %s\n", file);
-        return;
+        int ch;
+        while ((ch = getchar()) != '\n' && ch != EOF);
+
+        printf("Thread is ready. Please enter content for file '%s':\n", file);
+
+        if (fgets(content, sizeof(content), stdin) != NULL) {
+            content[strcspn(content, "\n")] = '\0';
+            strcpy(target->content, content);
+            target->size = strlen(content);
+            printf("Wrote to %s\n", file);
+        } else {
+            printf("Error reading input for %s\n", file);
+        }
+    } else {
+        printf("%s does not exist in %s\n", file, current_dir->dirname);
     }
-    printf("%s does not exist in %s\n", file, current_dir->dirname);
+
+    pthread_mutex_unlock(&fs_lock);
 }
 
+
+void chmod_file(char *file, const char *new_perms) {
+    pthread_mutex_lock(&fs_lock);
+
+    file = resolve_symlink(file);
+    int index = search_file(file);
+    if (index >= 0) {
+        File *target = current_dir->files[index];
+
+        if (strlen(new_perms) != 9) {
+            printf("Invalid permission format. Use something like rwxr--r--\n");
+            pthread_mutex_unlock(&fs_lock);
+            return;
+        }
+
+        strcpy(target->permissions, new_perms);
+        printf("Permissions for %s updated to %s\n", file, new_perms);
+    } else {
+        printf("%s does not exist in %s\n", file, current_dir->dirname);
+    }
+
+    pthread_mutex_unlock(&fs_lock);
+}
+
+
+
 void read_file(char *file) {
+    pthread_mutex_lock(&fs_lock);
+
     file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
@@ -136,6 +219,7 @@ void read_file(char *file) {
 
         if (!has_permission(target, "r")) {
             printf("Permission denied: Cannot read %s\n", file);
+            pthread_mutex_unlock(&fs_lock); // Unlock before return
             return;
         }
 
@@ -147,10 +231,14 @@ void read_file(char *file) {
         return;
     }
     printf("%s does not exist in %s\n", file, current_dir->dirname);
+
+    pthread_mutex_unlock(&fs_lock); //Unlock after done
 }
 
 
 void delete_file(char *file) {
+    pthread_mutex_lock(&fs_lock); //Lock before file access
+
     file = resolve_symlink(file);
     int index = search_file(file);
     if (index >= 0) {
@@ -158,11 +246,13 @@ void delete_file(char *file) {
 
         if (!has_permission(target, "w")) {
             printf("Permission denied: Cannot delete %s\n", file);
+            pthread_mutex_unlock(&fs_lock); //unlock before return
             return;
         }
 
         target->exists = 0;
         printf("%s has been deleted from %s\n", file, current_dir->dirname);
+        pthread_mutex_unlock(&fs_lock); //Unlock after done
         return;
     }
     printf("%s does not exist in %s\n", file, current_dir->dirname);
@@ -415,11 +505,20 @@ void switch_user(const char *username) {
 
 
 void* simulate_process(void *arg) {
-    char *file = (char *)arg;
+    char *file = strdup((char *)arg);  // Make a safe copy
+    if (file == NULL) {
+        perror("Failed to duplicate filename");
+        return NULL;
+    }
+
+    usleep(100000); // delay to avoid race condition with shell
+
     printf("Process started for file %s\n", file);
     printf("Process is writing to file %s\n", file);
+
     write_file(file);
-    free(file); 
+
+    free(file);
     return NULL;
 }
 

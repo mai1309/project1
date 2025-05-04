@@ -51,8 +51,10 @@ int main()
                 if (search_file(file) >= 0)
                 {
                     pthread_t tid;
-                    pthread_create(&tid, NULL, simulate_process, strdup(file));
-                    pthread_detach(tid);
+                    char *file_copy = strdup(file); // Safe string copy
+                    pthread_create(&tid, NULL, simulate_process, file_copy);
+                    pthread_join(tid, NULL);        // Wait for the thread to finish
+
                 }
                 else
                 {
@@ -174,6 +176,14 @@ int main()
             printf("Current user: %s (group: %s)\n", current_user, current_group);
         else if(strcmp(input, "listusers") == 0)
             list_users();
+            else if (strncmp(input, "chmod ", 6) == 0)
+            {
+                char fname[50], perms[10];
+                if (sscanf(input + 6, "%s %s", fname, perms) == 2)
+                    chmod_file(fname, perms);
+                else
+                    printf("Usage: chmod <filename> <permissions>\n");
+            }            
         else
             printf("Unknown Command\n");
     } 
