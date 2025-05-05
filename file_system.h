@@ -58,6 +58,7 @@ void delete_symlink(char *linkname);
 void add_user(const char *username, const char *group);
 void switch_user(const char *username);
 void list_users();
+void delete_user(const char *username, const char *group);
 extern char current_user[20];
 extern char current_group[20];
 

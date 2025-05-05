@@ -505,6 +505,38 @@ void add_user(const char *username, const char *group) {
     }
 }
 
+void delete_user(const char *username, const char *group){
+    int found = 0;
+    for (int i = 0; i < user_count; i++)
+    {
+        if (strcmp(users[i].username, username) == 0 && strcmp(users[i].group, group) == 0)
+        {
+            if (strcmp(current_user, username) == 0)
+            {
+                printf("Cannot delete the currently logged-in user. Please switch users first.\n");
+                return;
+            }
+            if (users[i].root_dir != NULL)
+            {
+                free(users[i].root_dir);
+                users[i].root_dir = NULL;
+            }
+            for (int j = i; j < user_count - 1; j++)
+            {
+                users[j] = users[j + 1];
+            }
+            user_count--;
+            found = 1;
+            printf("User '%s' (group '%s') deleted successfully.\n", username, group);
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        printf("User '%s' (group '%s') not found.\n", username, group);
+    }
+}
 
 void switch_user(const char *username) {
     for (int i = 0; i < user_count; i++) {

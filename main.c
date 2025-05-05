@@ -25,23 +25,25 @@ int main()
         {
             printf("Avaliable Commands:\n");
             
-            printf("- exit                         - Exit simulation\n");
-            printf("- create <filename>            - Create a file (owned by current user)\n");
-            printf("- read <filename>              - Read a file (requires read permission)\n");
-            printf("- write <filename>             - Write to a file (requires write permission)\n");
-            printf("- delete <filename>            - Delete a file (requires write permission)\n");
-            printf("- adduser <username> <group>   - Add a new user to the system\n");
-            printf("- switchuser <username>        - Switch to an existing user\n");
-            printf("- listusers                    - List users in the system\n");
-            printf("- whoami                       - Display the current user and group\n");
-            printf("- createprocess <filename>     - Simulate a process writing to a file\n");
-            printf("- list                         - List content in directory\n");
-            printf("- createdir <dirname>          - Creates directory\n");
-            printf("- deletedir <dirname>          - Deletes directory\n");
-            printf("- switchdir <dirname>          - Changes directory, use .. to move backwards\n");
-            printf("- link <linkname> <target>     - Creates Symlink\n");
-            printf("- unlink <linkname>            - Deletes Symlink\n");
-            printf("- resolve <linkname>           - Look up what symlink points to\n");
+            printf("- exit                              - Exit simulation\n");
+            printf("- create <filename>                 - Create a file (owned by current user)\n");
+            printf("- read <filename>                   - Read a file (requires read permission)\n");
+            printf("- write <filename>                  - Write to a file (requires write permission)\n");
+            printf("- delete <filename>                 - Delete a file (requires write permission)\n");
+            printf("- adduser <username> <group>        - Add a new user to the system\n");
+            printf("- deleteuser <username> <group>     - Remove a user from the system\n");
+            printf("- switchuser <username>             - Switch to an existing user\n");
+            printf("- listusers                         - List users in the system\n");
+            printf("- whoami                            - Display the current user and group\n");
+            printf("- createprocess <filename>          - Simulate a process writing to a file\n");
+            printf("- list                              - List content in directory\n");
+            printf("- createdir <dirname>               - Creates directory\n");
+            printf("- deletedir <dirname>               - Deletes directory\n");
+            printf("- switchdir <dirname>               - Changes directory, use .. to move backwards\n");
+            printf("- link <linkname> <target>          - Creates Symlink\n");
+            printf("- unlink <linkname>                 - Deletes Symlink\n");
+            printf("- resolve <linkname>                - Look up what symlink points to\n");
+            printf("- chmod <filename> <permissions>    - Look up what symlink points to\n");
         }
         else if (strncmp(input, "createprocess ", 14) == 0)
         {
@@ -164,6 +166,14 @@ int main()
             else
                 printf("Usage: adduser <username> <group>\n");
         }
+        else if(strncmp(input, "deleteuser ", 10) == 0)
+        {
+            char uname[20], grp[20];
+            if(sscanf(input + 10, "%s %s", uname, grp) == 2)
+                delete_user(uname, grp);
+            else
+                printf("Usage: deleteuser <username> <group>\n");
+        }
         else if(strncmp(input, "switchuser ", 11) == 0)
         {
             char uname[20];
@@ -176,14 +186,14 @@ int main()
             printf("Current user: %s (group: %s)\n", current_user, current_group);
         else if(strcmp(input, "listusers") == 0)
             list_users();
-            else if (strncmp(input, "chmod ", 6) == 0)
-            {
-                char fname[50], perms[10];
-                if (sscanf(input + 6, "%s %s", fname, perms) == 2)
-                    chmod_file(fname, perms);
-                else
-                    printf("Usage: chmod <filename> <permissions>\n");
-            }            
+        else if (strncmp(input, "chmod ", 6) == 0)
+        {
+            char fname[50], perms[10];
+            if (sscanf(input + 6, "%s %s", fname, perms) == 2)
+                chmod_file(fname, perms);
+            else
+                printf("Usage: chmod <filename> <permissions>\n");
+        }            
         else
             printf("Unknown Command\n");
     } 
