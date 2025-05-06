@@ -68,7 +68,7 @@ int main()
                 printf("Usage: createprocess <filename>\n");
             }
         }
-        else if(strncmp(input, "create ", 7) == 0)       //extracts the file name after the input word
+        else if(strncmp(input, "create ", 7) == 0)       
         {
             if(sscanf(input + 7, "%s", file) == 1)
                 create_file(file);
@@ -107,7 +107,7 @@ int main()
         }
         else if(strcmp(input, "list") == 0)
             list_contents();
-        else if(strncmp(input, "createdir ", 10) == 0)       //extracts the file name after the input word
+        else if(strncmp(input, "createdir ", 10) == 0)      
         {
             if(sscanf(input + 10, "%s", name) == 1)
                 create_directory(name);
