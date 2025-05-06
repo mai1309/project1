@@ -68,7 +68,7 @@ int main()
                 printf("Usage: createprocess <filename>\n");
             }
         }
-        else if(strncmp(input, "create ", 7) == 0)       
+        else if(strncmp(input, "create ", 7) == 0)      
         {
             if(sscanf(input + 7, "%s", file) == 1)
                 create_file(file);
