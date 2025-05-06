@@ -70,9 +70,6 @@ void file_simulation()
     add_user("admin", "admin");
     users[0].root_dir = global_root;
 
-    add_user("john", "admin");
-    users[1].root_dir = global_root;
-
     // Start as admin
     switch_user("admin");
 
