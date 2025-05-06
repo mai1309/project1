@@ -43,7 +43,7 @@ int main()
             printf("- link <linkname> <target>          - Creates Symlink\n");
             printf("- unlink <linkname>                 - Deletes Symlink\n");
             printf("- resolve <linkname>                - Look up what symlink points to\n");
-            printf("- chmod <filename> <permissions>    - Look up what symlink points to\n");
+            printf("- chmod <filename> <permissions>    - Modify the permissions of a file\n");
         }
         else if (strncmp(input, "createprocess ", 14) == 0)
         {
